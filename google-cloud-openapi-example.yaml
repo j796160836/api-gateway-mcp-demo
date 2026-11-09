@@ -1,0 +1,83 @@
+# ILLUSTRATION ONLY: replace the backend URL, add your actual API security
+# schemes, and verify current Google Cloud preview features before deployment.
+openapi: 3.0.3
+info:
+  title: Order Service API
+  version: 1.0.0
+x-google-api-management:
+  mcp: true
+  backends:
+    order-backend:
+      address: https://REPLACE-WITH-YOUR-CLOUD-RUN-URL
+paths:
+  /orders:
+    get:
+      operationId: list_order
+      description: List orders and their current status.
+      x-google-backend: order-backend
+      x-google-mcp-tool:
+        name: list_order
+        description: List orders and their current status.
+      responses:
+        '200': {description: Order list}
+  /orders/{order_id}:
+    get:
+      operationId: get_order
+      description: Look up a paid order by ID.
+      x-google-backend: order-backend
+      x-google-mcp-tool:
+        name: get_order
+        description: Look up an order by ID before checking inventory.
+      parameters:
+        - in: path
+          name: order_id
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: Order record}
+  /inventory:
+    get:
+      operationId: list_sku
+      description: List SKUs and their available inventory.
+      x-google-backend: order-backend
+      x-google-mcp-tool:
+        name: list_sku
+        description: List SKUs and their available inventory.
+      responses:
+        '200': {description: SKU list}
+  /inventory/{sku}:
+    get:
+      operationId: check_inventory
+      description: Check inventory available for a SKU.
+      x-google-backend: order-backend
+      x-google-mcp-tool:
+        name: check_inventory
+        description: Check the available quantity of a SKU.
+      parameters:
+        - in: path
+          name: sku
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: Inventory record}
+  /shipments:
+    post:
+      operationId: create_shipment
+      description: Create a shipment for a paid order with sufficient stock.
+      x-google-backend: order-backend
+      x-google-mcp-tool:
+        name: create_shipment
+        description: Create a shipment, only after explicit user approval.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order_id: {type: string}
+              required: [order_id]
+      responses:
+        '200': {description: Created shipment}
+
+# The manager-only POST /orders/{order_id}/cancel operation is omitted.
