@@ -1,33 +1,68 @@
-# ILLUSTRATION ONLY: replace the backend URL, add your actual API security
-# schemes, and verify current Google Cloud preview features before deployment.
-openapi: 3.0.3
+# Render the Cloud Run URL before creating the API config. See docs/google-cloud.md.
+openapi: 3.0.4
 info:
-  title: Order Service API
+  title: Order Demo API
   version: 1.0.0
 x-google-api-management:
-  mcp: true
   backends:
     order-backend:
-      address: https://REPLACE-WITH-YOUR-CLOUD-RUN-URL
+      address: https://replace-with-your-cloud-run-url.run.app
+      jwtAudience: https://replace-with-your-cloud-run-url.run.app
+      pathTranslation: APPEND_PATH_TO_ADDRESS
+      protocol: http/1.1
+  mcp:
+    tools-list:
+      security:
+        google_api_key: []
+x-google-backend: order-backend
+security:
+  - google_api_key: []
+components:
+  securitySchemes:
+    google_api_key:
+      type: apiKey
+      name: x-api-key
+      in: header
+  schemas:
+    OrderRequest:
+      type: object
+      required: [sku, quantity]
+      properties:
+        sku:
+          type: string
+          minLength: 1
+          example: SKU-A01
+        quantity:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 2
 paths:
   /orders:
     get:
       operationId: list_order
-      description: List orders and their current status.
-      x-google-backend: order-backend
-      x-google-mcp-tool:
-        name: list_order
-        description: List orders and their current status.
+      summary: List orders and their current status.
+      x-google-mcp-tool: true
       responses:
         '200': {description: Order list}
+    post:
+      operationId: create_order
+      summary: Create a paid demo order.
+      x-google-mcp-tool: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OrderRequest'}
+      responses:
+        '201': {description: Created order}
+        '404': {description: SKU not found}
+        '422': {description: Invalid order request}
   /orders/{order_id}:
     get:
       operationId: get_order
-      description: Look up a paid order by ID.
-      x-google-backend: order-backend
-      x-google-mcp-tool:
-        name: get_order
-        description: Look up an order by ID before checking inventory.
+      summary: Look up an order by ID before checking inventory.
+      x-google-mcp-tool: true
       parameters:
         - in: path
           name: order_id
@@ -35,24 +70,19 @@ paths:
           schema: {type: string}
       responses:
         '200': {description: Order record}
+        '404': {description: Order not found}
   /inventory:
     get:
       operationId: list_sku
-      description: List SKUs and their available inventory.
-      x-google-backend: order-backend
-      x-google-mcp-tool:
-        name: list_sku
-        description: List SKUs and their available inventory.
+      summary: List SKUs and their available inventory.
+      x-google-mcp-tool: true
       responses:
         '200': {description: SKU list}
   /inventory/{sku}:
     get:
       operationId: check_inventory
-      description: Check inventory available for a SKU.
-      x-google-backend: order-backend
-      x-google-mcp-tool:
-        name: check_inventory
-        description: Check the available quantity of a SKU.
+      summary: Check the available quantity of a SKU.
+      x-google-mcp-tool: true
       parameters:
         - in: path
           name: sku
@@ -60,24 +90,24 @@ paths:
           schema: {type: string}
       responses:
         '200': {description: Inventory record}
+        '404': {description: SKU not found}
   /shipments:
     post:
       operationId: create_shipment
-      description: Create a shipment for a paid order with sufficient stock.
-      x-google-backend: order-backend
-      x-google-mcp-tool:
-        name: create_shipment
-        description: Create a shipment, only after explicit user approval.
+      summary: Create a shipment for a paid order after explicit user approval.
+      x-google-mcp-tool: true
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [order_id]
               properties:
                 order_id: {type: string}
-              required: [order_id]
       responses:
         '200': {description: Created shipment}
-
-# The manager-only POST /orders/{order_id}/cancel operation is omitted.
+        '404': {description: Order not found}
+        '409': {description: Order cannot ship}
+        '422': {description: Invalid shipment request}
+# Manager cancellation is intentionally omitted from the public gateway.

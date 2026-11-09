@@ -9,7 +9,7 @@ import httpx
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from config import REST_API_KEY, REST_URL
+from config import MCP_HOST, REST_API_KEY, REST_URL
 from demo_mcp import FastMCP
 
 
@@ -65,7 +65,7 @@ async def main():
                 {"service": mcp.name, "transport": "Streamable HTTP", "mcp": "/mcp"}
             )
 
-        await mcp.run_async(transport="http", host="127.0.0.1", port=9000, path="/mcp")
+        await mcp.run_async(transport="http", host=MCP_HOST, port=9000, path="/mcp")
 
 if __name__ == "__main__":
     asyncio.run(main())

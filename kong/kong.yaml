@@ -1,0 +1,32 @@
+_format_version: "3.0"
+
+services:
+  - name: order-rest
+    url: http://rest:8000
+    retries: 0
+    routes:
+      - name: order-rest-routes
+        paths:
+          - /orders
+          - /inventory
+          - /shipments
+          - /docs
+          - /openapi.json
+        strip_path: false
+
+  - name: order-mcp
+    url: http://mcp:9000
+    retries: 0
+    routes:
+      - name: order-mcp-stream
+        paths:
+          - "~/mcp$"
+        strip_path: false
+        request_buffering: false
+        response_buffering: false
+      - name: order-demo-home
+        paths:
+          - "~/$"
+        methods:
+          - GET
+        strip_path: false

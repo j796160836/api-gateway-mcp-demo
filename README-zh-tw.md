@@ -6,6 +6,15 @@ MCP Client → FastMCP Gateway → FastAPI REST API → SQLite
 
 Gateway 啟動時讀取 FastAPI 的 OpenAPI，依操作 ID 的允許清單產生工具。REST API 自行檢查金鑰、主管權限與訂單狀態。
 
+## API Gateway 整合
+
+| Gateway | MCP 架構 | 操作指南 |
+|---|---|---|
+| Google Cloud API Gateway | 原生 MCP（公開預覽）將工具呼叫轉成 Cloud Run 的 REST 請求 | [繁體中文](docs/google-cloud-zh-tw.md) · [English](docs/google-cloud.md) |
+| Kong Gateway | 本機 DB-less Kong 轉發 REST 請求與既有 FastMCP 流量 | [繁體中文](kong/README-zh-tw.md) · [English](kong/README.md) |
+
+直接執行原本的本機範例可參照下方說明。
+
 | REST 操作 | 一般 Agent 的 MCP 工具 |
 |---|---|
 | GET /orders | `list_order` |
@@ -101,4 +110,4 @@ python reset_demo_db.py
 python -m unittest -v test_demo
 ```
 
-此範例使用本機服務與示範金鑰，MCP 端點供本機操作。`google-cloud-openapi-example.yaml` 是原專案附的 Google Cloud 設定示意，本機示範不依賴它。
+獨立執行的範例使用本機服務與示範金鑰。Google Cloud 指南使用 `google-cloud-openapi-example.yaml` 作為部署範本。

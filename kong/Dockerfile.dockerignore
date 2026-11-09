@@ -1,0 +1,8 @@
+*
+!requirements.txt
+!api.py
+!config.py
+!database.py
+!demo_mcp.py
+!gateway.py
+!reset_demo_db.py

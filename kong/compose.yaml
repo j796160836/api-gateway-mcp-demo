@@ -1,0 +1,67 @@
+name: order-kong-demo
+
+x-demo: &demo
+  image: order-kong-demo-python
+  build:
+    context: ..
+    dockerfile: kong/Dockerfile
+
+services:
+  rest:
+    <<: *demo
+    command: [python, -m, uvicorn, "api:app", --host, "0.0.0.0", --port, "8000"]
+    environment:
+      REST_API_KEY: ${REST_API_KEY:-demo-rest-secret}
+      MANAGER_KEY: ${MANAGER_KEY:-demo-manager-secret}
+      SQLITE_PATH: /data/db.sqlite3
+    volumes:
+      - orders:/data
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=2)"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  mcp:
+    <<: *demo
+    command: [python, gateway.py]
+    environment:
+      REST_URL: http://rest:8000
+      REST_API_KEY: ${REST_API_KEY:-demo-rest-secret}
+      MCP_HOST: "0.0.0.0"
+    depends_on:
+      rest:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/', timeout=2)"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  kong:
+    image: kong:3.9.3
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yaml
+      KONG_PROXY_LISTEN: "0.0.0.0:8000"
+      KONG_ADMIN_LISTEN: "off"
+      KONG_ADMIN_GUI_LISTEN: "off"
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+    ports:
+      - "127.0.0.1:${KONG_DEMO_PORT:-18000}:8000"
+    volumes:
+      - ./kong.yaml:/etc/kong/kong.yaml:ro
+    depends_on:
+      rest:
+        condition: service_healthy
+      mcp:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, kong, health]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  orders:

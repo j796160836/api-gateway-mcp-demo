@@ -6,6 +6,15 @@ MCP Client → FastMCP Gateway → FastAPI REST API → SQLite
 
 At startup, the gateway reads the REST API's OpenAPI schema and generates tools for the allowed operation IDs. The REST API checks credentials, manager approval, and order status.
 
+## Gateway integrations
+
+| Gateway | MCP architecture | Guides |
+|---|---|---|
+| Google Cloud API Gateway | Native MCP (Public Preview) converts tool calls to REST on Cloud Run | [English](docs/google-cloud.md) · [繁體中文](docs/google-cloud-zh-tw.md) |
+| Kong Gateway | A local DB-less Kong deployment proxies REST and the existing FastMCP server | [English](kong/README.md) · [繁體中文](kong/README-zh-tw.md) |
+
+The standalone local demo is documented below.
+
 | REST operation | MCP access |
 |---|---|
 | GET /orders | `list_order` |
@@ -101,4 +110,4 @@ Start both services with the default keys. To isolate the test data, set `SQLITE
 python -m unittest -v test_demo
 ```
 
-The demo uses local services and sample keys. The included `google-cloud-openapi-example.yaml` illustrates a cloud configuration and is optional for local use.
+The standalone demo uses local services and sample keys. The Google Cloud guide uses `google-cloud-openapi-example.yaml` as its deployment template.
