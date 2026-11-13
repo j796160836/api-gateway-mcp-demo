@@ -1,0 +1,11 @@
+<TargetEndpoint name="default">
+  <HTTPTargetConnection>
+    <Authentication>
+      <GoogleIDToken>
+        <Audience>https://replace-cloud-run.run.app</Audience>
+        <IncludeEmail>true</IncludeEmail>
+      </GoogleIDToken>
+    </Authentication>
+    <URL>https://replace-cloud-run.run.app</URL>
+  </HTTPTargetConnection>
+</TargetEndpoint>

@@ -1,0 +1,35 @@
+name: order-envoy-demo
+
+services:
+  rest:
+    image: order-envoy-demo-rest
+    build:
+      context: ..
+      dockerfile: envoy/Dockerfile
+    command: [python, -m, uvicorn, "api:app", --host, "0.0.0.0", --port, "8000"]
+    environment:
+      REST_API_KEY: ${REST_API_KEY:-demo-rest-secret}
+      MANAGER_KEY: ${MANAGER_KEY:-demo-manager-secret}
+      SQLITE_PATH: /data/db.sqlite3
+    volumes:
+      - orders:/data
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=2)"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  envoy:
+    image: envoyproxy/envoy:v1.40.2
+    command: ["-c", /etc/envoy/envoy.yaml, --log-level, warning]
+    depends_on:
+      rest:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${ENVOY_DEMO_PORT:-18300}:8080"
+      - "127.0.0.1:${ENVOY_METRICS_PORT:-18301}:9901"
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml:ro
+
+volumes:
+  orders:

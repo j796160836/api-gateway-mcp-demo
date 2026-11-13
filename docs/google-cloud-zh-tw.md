@@ -1,6 +1,6 @@
 # 用 Google Cloud API Gateway 串接訂單範例
 
-[English](google-cloud.md)
+語言：[繁體中文](google-cloud-zh-tw.md) | [English](google-cloud.md)
 
 `MCP 或 REST 客戶端 → Google Cloud API Gateway → 受 IAM 保護的 Cloud Run → FastAPI → SQLite`
 
@@ -22,11 +22,11 @@ gcloud run deploy --help | grep -E 'build-service-account|invoker-iam-check'
 ```sh
 gcloud auth login
 PROJECT_ID='your-google-cloud-project-id'
-BACKEND_REGION='us-west2'
-GATEWAY_REGION='us-west2'
+BACKEND_REGION='us-east1'
+GATEWAY_REGION='us-east1'
 SERVICE='order-demo-rest'
 API_ID='order-demo-api'
-CONFIG_ID='order-demo-v1'
+CONFIG_ID='order-demo-east-v1'
 GATEWAY_ID='order-demo-gateway'
 KEY_ID='order-demo-client'
 BUILD_SA="order-demo-build@${PROJECT_ID}.iam.gserviceaccount.com"
@@ -52,7 +52,7 @@ gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --member="serviceAccount:$BUILD_SA" --role=roles/run.builder
 ```
 
-範例將 Cloud Run 和 API Gateway 都放在 `us-west2`。Cloud Run 可以用 `us-west1`，但 API Gateway 的支援區域清單未包含該區。本範例的執行帳戶無需額外的 Google Cloud 應用程式角色，Gateway 帳戶則只會取得呼叫這個 Cloud Run 服務的權限。 [API Gateway 支援區域](https://docs.cloud.google.com/api-gateway/docs/deployment-model#choose_a_google_cloud_region) · [建置服務帳戶](https://docs.cloud.google.com/run/docs/configuring/services/build-service-account)
+範例將 Cloud Run 和 API Gateway 都放在 `us-east1`。Cloud Run 可以用 `us-west1`，但 API Gateway 的支援區域清單未包含該區。本範例的執行帳戶無需額外的 Google Cloud 應用程式角色，Gateway 帳戶則只會取得呼叫這個 Cloud Run 服務的權限。 [API Gateway 支援區域](https://docs.cloud.google.com/api-gateway/docs/deployment-model#choose_a_google_cloud_region) · [建置服務帳戶](https://docs.cloud.google.com/run/docs/configuring/services/build-service-account)
 
 ### 設定 gcloud 的預設專案
 
@@ -153,7 +153,7 @@ gcloud services api-keys list \
   --format='table(name.basename():label=KEY_ID,displayName)'
 ```
 
-將 `KEY_ID` 欄位的值傳給 `gcloud services api-keys get-key-string`。目前部署在 `flutter-markdown-drive` 的 Demo 使用 `order-demo-client-v2`。如果有多把金鑰使用相同顯示名稱，可用 `gcloud services api-keys describe KEY_ID` 檢查 API 限制，選擇只允許呼叫該 Gateway 受管服務的金鑰。 [取得金鑰值](https://docs.cloud.google.com/sdk/gcloud/reference/services/api-keys/get-key-string)
+將 `KEY_ID` 欄位的值傳給 `gcloud services api-keys get-key-string`。目前部署在 `my-awesome-project` 的 Demo 使用 `order-demo-client-v2`。如果有多把金鑰使用相同顯示名稱，可用 `gcloud services api-keys describe KEY_ID` 檢查 API 限制，選擇只允許呼叫該 Gateway 受管服務的金鑰。 [取得金鑰值](https://docs.cloud.google.com/sdk/gcloud/reference/services/api-keys/get-key-string)
 
 ## 4. 測試 REST 並建立示範訂單
 
@@ -213,12 +213,12 @@ fi
 
 ## 6. 用 Google Antigravity CLI（`agy`）連線
 
-在 macOS 上，執行下列指令把受限制的 API 金鑰複製到剪貼簿。這組指令使用已部署在 `flutter-markdown-drive` 的 Demo 金鑰。若使用自己的部署，請換成對應的專案 ID 和金鑰 ID。 [Google Cloud CLI 取得金鑰](https://docs.cloud.google.com/sdk/gcloud/reference/services/api-keys/get-key-string)
+在 macOS 上，執行下列指令把受限制的 API 金鑰複製到剪貼簿。這組指令使用已部署在 `my-awesome-project` 的 Demo 金鑰。若使用自己的部署，請換成對應的專案 ID 和金鑰 ID。 [Google Cloud CLI 取得金鑰](https://docs.cloud.google.com/sdk/gcloud/reference/services/api-keys/get-key-string)
 
 ```sh
 gcloud services api-keys get-key-string order-demo-client-v2 \
-  --project=flutter-markdown-drive \
-  --billing-project=flutter-markdown-drive \
+  --project=my-awesome-project \
+  --billing-project=my-awesome-project \
   --format='value(keyString)' --quiet | pbcopy
 ```
 
@@ -228,7 +228,7 @@ gcloud services api-keys get-key-string order-demo-client-v2 \
 {
   "mcpServers": {
     "order-demo": {
-      "serverUrl": "https://order-demo-gateway-5p0lq3db.wl.gateway.dev/mcp",
+      "serverUrl": "https://order-demo-gateway-5p0lq3db.ue.gateway.dev/mcp",
       "headers": {
         "x-api-key": "YOUR_GATEWAY_API_KEY"
       }
@@ -240,6 +240,18 @@ gcloud services api-keys get-key-string order-demo-client-v2 \
 啟動 `agy` 後輸入 `/mcp`，查看連線狀態或重新載入設定。確認 `order-demo` 已連線後，可用下列提示測試唯讀工具。 [Antigravity MCP 管理介面](https://antigravity.google/docs/mcp)
 
 > 請用 `order-demo` 的 `get_order` 查詢 `ORD-1001`，再用 `check_inventory` 查詢該訂單 SKU 的可用庫存。
+
+## 7. 用 Cloud Logging 和 Cloud Monitoring 觀察流量
+
+API Gateway 會自動記錄請求日誌與指標。先執行上方的 REST 和 MCP 測試產生流量，再用有 Cloud Logging 讀取權限的帳戶，從專案根目錄執行以下指令。腳本會列出最近一小時內最多 30 筆 Gateway 請求，顯示 HTTP 狀態、延遲、操作名稱，以及日誌提供的追蹤 ID。 [監控 API Gateway](https://docs.cloud.google.com/api-gateway/docs/monitoring)
+
+```sh
+bash google/gateway-telemetry.sh "$PROJECT_ID" "$GATEWAY_ID"
+```
+
+在 **Logging → Logs Explorer** 選取該 Gateway 的 API Gateway 資源。若只想看 MCP 流量，可在請求日誌的篩選條件加上 `httpRequest.requestUrl:"/mcp"`。JSON-RPC 工具呼叫失敗仍可能回傳 HTTP 200，請查看 MCP 回應中的 `error` 或 `result.isError`。 [MCP 觀測與錯誤處理](https://docs.cloud.google.com/api-gateway/docs/mcp-configure#observability)
+
+在 **Monitoring → Metrics Explorer** 選擇 **API Gateway → Proxy → Request Count**（`apigateway.googleapis.com/proxy/request_count`），依 Gateway ID 和區域篩選，再依 HTTP 狀態碼類別分組查看流量和錯誤。延遲可看 API **Overview** 頁籤的圖表，或查看單筆請求日誌的 `httpRequest.latency`。指標可能要等幾分鐘才會出現。 [API Gateway 指標與日誌](https://docs.cloud.google.com/api-gateway/docs/monitoring)
 
 ## 排查問題、更新及清理資源
 

@@ -1,6 +1,6 @@
 # API Gateway meets MCP — Order demo
 
-[繁體中文](README-zh-tw.md)
+Language: [繁體中文](README-zh-tw.md) | [English](README-en.md)
 
 MCP Client → FastMCP Gateway → FastAPI REST API → SQLite
 
@@ -12,6 +12,8 @@ At startup, the gateway reads the REST API's OpenAPI schema and generates tools 
 |---|---|---|
 | Google Cloud API Gateway | Native MCP (Public Preview) converts tool calls to REST on Cloud Run | [English](docs/google-cloud.md) · [繁體中文](docs/google-cloud-zh-tw.md) |
 | Kong Gateway | A local DB-less Kong deployment proxies REST and the existing FastMCP server | [English](kong/README.md) · [繁體中文](kong/README-zh-tw.md) |
+| Envoy | Native MCP JSON REST Bridge translates tool calls to FastAPI | [English](envoy/README.md) · [繁體中文](envoy/README-zh-tw.md) |
+| Apigee | Managed MCP Discovery Proxy maps OpenAPI operations to an Apigee REST proxy | [English](apigee/README.md) · [繁體中文](apigee/README-zh-tw.md) |
 
 The standalone local demo is documented below.
 
@@ -111,3 +113,9 @@ python -m unittest -v test_demo
 ```
 
 The standalone demo uses local services and sample keys. The Google Cloud guide uses `google-cloud-openapi-example.yaml` as its deployment template.
+
+---
+
+## LICENSE
+
+MIT

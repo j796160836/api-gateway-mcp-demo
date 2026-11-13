@@ -1,0 +1,3 @@
+<VerifyAPIKey name="Verify-Order-Key">
+  <APIKey ref="request.header.x-api-key"/>
+</VerifyAPIKey>

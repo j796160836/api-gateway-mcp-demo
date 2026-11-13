@@ -1,6 +1,6 @@
 # Kong API Gateway for the order demo
 
-[繁體中文](README-zh-tw.md)
+Language: [繁體中文](README-zh-tw.md) | [English](README-en.md)
 
 ## Architecture
 
@@ -74,7 +74,21 @@ The client should discover `list_order`, `get_order`, `list_sku`, `check_invento
 
 The MCP route preserves `/mcp`, leaves methods unrestricted so the client can use its session lifecycle, and disables request and response buffering for streaming. Both upstream services have proxy retries disabled. [Kong routes](https://developer.konghq.com/gateway/entities/route/), [Kong services](https://developer.konghq.com/gateway/entities/service/)
 
-## 4. Troubleshoot and clean up
+## 4. Observe requests with Prometheus and access logs
+
+The bundled Prometheus plugin records request counts by service, route, and HTTP status, along with request, Kong, and upstream latency. Compose publishes the Status API on loopback port `18100`. Use `KONG_METRICS_PORT` to change it. Kong's Admin API remains disabled. [Kong Prometheus plugin](https://developer.konghq.com/plugins/prometheus/)
+
+```sh
+curl -fsS "$KONG_BASE/orders" -H "x-api-key: $REST_API_KEY"
+MCP_URL="$KONG_BASE/mcp" python client.py
+curl -fsS "http://127.0.0.1:${KONG_METRICS_PORT:-18100}/metrics" \
+  | grep -E '^kong_(http_requests_total|request_latency_ms_count)'
+docker compose -f kong/compose.yaml logs --tail=30 kong
+```
+
+Look for `order-rest-routes` and `order-mcp-stream`. A Prometheus process on the host can scrape `127.0.0.1:18100` at `/metrics`. A Prometheus container on the Compose network can scrape `kong:8100`. After upgrading an existing stack, run `docker compose -f kong/compose.yaml up -d --wait` to apply the port and plugin configuration.
+
+## 5. Troubleshoot and clean up
 
 | Symptom | Check |
 |---|---|

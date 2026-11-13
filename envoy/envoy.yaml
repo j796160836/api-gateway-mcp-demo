@@ -1,0 +1,91 @@
+admin:
+  address:
+    socket_address: { address: 0.0.0.0, port_value: 9901 }
+  allow_paths:
+    - exact: /ready
+    - exact: /stats/prometheus
+
+static_resources:
+  listeners:
+    - name: order_demo
+      address:
+        socket_address: { address: 0.0.0.0, port_value: 8080 }
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: order_demo
+                normalize_path: true
+                path_with_escaped_slashes_action: REJECT_REQUEST
+                access_log:
+                  - name: envoy.access_loggers.stdout
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+                      log_format:
+                        json_format:
+                          timestamp: "%START_TIME%"
+                          route: "%ROUTE_NAME%"
+                          status: "%RESPONSE_CODE%"
+                          duration_ms: "%DURATION%"
+                          request_id: "%REQ(X-REQUEST-ID)%"
+                route_config:
+                  name: demo_routes
+                  virtual_hosts:
+                    - name: orders
+                      domains: ["*"]
+                      routes:
+                        - name: mcp
+                          match: { path: /mcp }
+                          route: { cluster: order_rest }
+                        - name: rest
+                          match: { prefix: / }
+                          route: { cluster: order_rest }
+                http_filters:
+                  - name: envoy.filters.http.mcp_json_rest_bridge
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.mcp_json_rest_bridge.v3.McpJsonRestBridge
+                      disable_clear_route_cache: true
+                      server_info:
+                        fallback_protocol_version: "2025-11-25"
+                      tool_config:
+                        tool_list_local: {}
+                        tools:
+                          - name: list_order
+                            http_rule: { get: /orders }
+                            tool_list_config:
+                              description: List demo orders and their current status.
+                          - name: get_order
+                            http_rule: { get: "/orders/{order_id}" }
+                            tool_list_config:
+                              description: Look up one order by ID.
+                              input_schema: '{"properties":{"order_id":{"type":"string"}},"required":["order_id"],"additionalProperties":false}'
+                          - name: list_sku
+                            http_rule: { get: /inventory }
+                            tool_list_config:
+                              description: List SKUs and their available stock.
+                          - name: check_inventory
+                            http_rule: { get: "/inventory/{sku}" }
+                            tool_list_config:
+                              description: Check the available stock for one SKU.
+                              input_schema: '{"properties":{"sku":{"type":"string"}},"required":["sku"],"additionalProperties":false}'
+                          - name: create_shipment
+                            http_rule: { post: /shipments, body: "*" }
+                            tool_list_config:
+                              description: Create a shipment for a paid order after explicit human approval.
+                              input_schema: '{"properties":{"order_id":{"type":"string"}},"required":["order_id"],"additionalProperties":false}'
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  clusters:
+    - name: order_rest
+      type: STRICT_DNS
+      connect_timeout: 2s
+      load_assignment:
+        cluster_name: order_rest
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address: { address: rest, port_value: 8000 }

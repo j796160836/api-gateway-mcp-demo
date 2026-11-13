@@ -1,6 +1,6 @@
 # Google Cloud API Gateway for the order demo
 
-[繁體中文](google-cloud-zh-tw.md)
+Language: [繁體中文](google-cloud-zh-tw.md) | [English](google-cloud.md)
 
 `MCP or REST client → Google Cloud API Gateway → IAM-protected Cloud Run → FastAPI → SQLite`
 
@@ -22,11 +22,11 @@ Check that the help output includes both flags before deploying. If either flag 
 ```sh
 gcloud auth login
 PROJECT_ID='your-google-cloud-project-id'
-BACKEND_REGION='us-west2'
-GATEWAY_REGION='us-west2'
+BACKEND_REGION='us-east1'
+GATEWAY_REGION='us-east1'
 SERVICE='order-demo-rest'
 API_ID='order-demo-api'
-CONFIG_ID='order-demo-v1'
+CONFIG_ID='order-demo-east-v1'
 GATEWAY_ID='order-demo-gateway'
 KEY_ID='order-demo-client'
 BUILD_SA="order-demo-build@${PROJECT_ID}.iam.gserviceaccount.com"
@@ -52,7 +52,7 @@ gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --member="serviceAccount:$BUILD_SA" --role=roles/run.builder
 ```
 
-The example colocates Cloud Run and API Gateway in `us-west2`. Cloud Run can use `us-west1`, while API Gateway’s location list does not include it. The runtime account needs no application-specific Google Cloud roles for this demo. The separate Gateway account gets invocation access on this one service. [API Gateway locations](https://docs.cloud.google.com/api-gateway/docs/deployment-model#choose_a_google_cloud_region) · [Build service account](https://docs.cloud.google.com/run/docs/configuring/services/build-service-account)
+The example colocates Cloud Run and API Gateway in `us-east1`. Cloud Run can use `us-west1`, while API Gateway’s location list does not include it. The runtime account needs no application-specific Google Cloud roles for this demo. The separate Gateway account gets invocation access on this one service. [API Gateway locations](https://docs.cloud.google.com/api-gateway/docs/deployment-model#choose_a_google_cloud_region) · [Build service account](https://docs.cloud.google.com/run/docs/configuring/services/build-service-account)
 
 ### Set optional gcloud defaults
 
@@ -153,7 +153,7 @@ gcloud services api-keys list \
   --format='table(name.basename():label=KEY_ID,displayName)'
 ```
 
-Use the value in `KEY_ID` as the argument to `gcloud services api-keys get-key-string`. For the deployed `flutter-markdown-drive` demo, the current ID is `order-demo-client-v2`. If several keys share a display name, check their API restrictions with `gcloud services api-keys describe KEY_ID` and select the one restricted to your Gateway's managed service. [Get a key string](https://docs.cloud.google.com/sdk/gcloud/reference/services/api-keys/get-key-string)
+Use the value in `KEY_ID` as the argument to `gcloud services api-keys get-key-string`. For the deployed `my-awesome-project` demo, the current ID is `order-demo-client-v2`. If several keys share a display name, check their API restrictions with `gcloud services api-keys describe KEY_ID` and select the one restricted to your Gateway's managed service. [Get a key string](https://docs.cloud.google.com/sdk/gcloud/reference/services/api-keys/get-key-string)
 
 ## 4. Smoke-test REST and create a fresh order
 
@@ -213,12 +213,12 @@ A successful call returns a created shipment. Repeat `check_inventory` to confir
 
 ## 6. Connect with Google Antigravity CLI (`agy`)
 
-On macOS, copy the restricted API key to your clipboard. This command uses the key for the deployed `flutter-markdown-drive` demo. For your own deployment, substitute your project and key IDs. [Google Cloud CLI key retrieval](https://docs.cloud.google.com/sdk/gcloud/reference/services/api-keys/get-key-string)
+On macOS, copy the restricted API key to your clipboard. This command uses the key for the deployed `my-awesome-project` demo. For your own deployment, substitute your project and key IDs. [Google Cloud CLI key retrieval](https://docs.cloud.google.com/sdk/gcloud/reference/services/api-keys/get-key-string)
 
 ```sh
 gcloud services api-keys get-key-string order-demo-client-v2 \
-  --project=flutter-markdown-drive \
-  --billing-project=flutter-markdown-drive \
+  --project=my-awesome-project \
+  --billing-project=my-awesome-project \
   --format='value(keyString)' --quiet | pbcopy
 ```
 
@@ -228,7 +228,7 @@ Open or create `~/.gemini/config/mcp_config.json`. Add `order-demo` under `mcpSe
 {
   "mcpServers": {
     "order-demo": {
-      "serverUrl": "https://order-demo-gateway-5p0lq3db.wl.gateway.dev/mcp",
+      "serverUrl": "https://order-demo-gateway-5p0lq3db.ue.gateway.dev/mcp",
       "headers": {
         "x-api-key": "YOUR_GATEWAY_API_KEY"
       }
@@ -240,6 +240,18 @@ Open or create `~/.gemini/config/mcp_config.json`. Add `order-demo` under `mcpSe
 Start `agy` and enter `/mcp` to check the connection or reload the configuration. Once `order-demo` is connected, try a read-only prompt. [Antigravity interactive MCP manager](https://antigravity.google/docs/mcp)
 
 > Use `order-demo` to look up `ORD-1001` with `get_order`, then check the available stock for its SKU with `check_inventory`.
+
+## 7. Observe traffic in Cloud Logging and Cloud Monitoring
+
+API Gateway records request logs and metrics automatically. Run the REST and MCP smoke tests above to generate traffic. With permission to read Cloud Logging, run the helper from the repository root to show the last 30 Gateway requests within the past hour. It shows status, latency, operation, and any trace ID supplied by the log entry. [Monitor API Gateway](https://docs.cloud.google.com/api-gateway/docs/monitoring)
+
+```sh
+bash google/gateway-telemetry.sh "$PROJECT_ID" "$GATEWAY_ID"
+```
+
+In **Logging → Logs Explorer**, select the API Gateway resource for your gateway. To focus on MCP traffic, add `httpRequest.requestUrl:"/mcp"` to the request-log filter. A JSON-RPC tool error can still have HTTP 200, so use the MCP response's `error` or `result.isError` to check individual calls. [MCP observability and errors](https://docs.cloud.google.com/api-gateway/docs/mcp-configure#observability)
+
+In **Monitoring → Metrics Explorer**, select **API Gateway → Proxy → Request Count** (`apigateway.googleapis.com/proxy/request_count`). Filter by your gateway ID and region, then group by HTTP response code class to see traffic and errors. For latency, use the latency chart on the API's **Overview** tab or read `httpRequest.latency` in individual request logs. Metrics can take a few minutes to appear. [API Gateway metrics and logs](https://docs.cloud.google.com/api-gateway/docs/monitoring)
 
 ## Troubleshoot, update, and clean up
 

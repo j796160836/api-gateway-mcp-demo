@@ -1,6 +1,6 @@
 # 用 Kong API Gateway 串接訂單範例
 
-[English](README.md)
+語言：[繁體中文](README-zh-tw.md) | [English](README-en.md)
 
 ## 架構
 
@@ -74,7 +74,21 @@ python approve_shipment.py "$ORDER_ID"
 
 MCP 路由保留 `/mcp` 路徑，讓客戶端使用工作階段需要的 HTTP 方法，並停用請求和回應緩衝以支援串流。兩個上游服務皆停用代理層重試。 [Kong 路由](https://developer.konghq.com/gateway/entities/route/)、[Kong 服務](https://developer.konghq.com/gateway/entities/service/)
 
-## 4. 排查問題與清理
+## 4. 用 Prometheus 和存取日誌觀察請求
+
+內建的 Prometheus 外掛依服務、路由和 HTTP 狀態記錄請求數，也會記錄整體請求、Kong 和上游服務的延遲。Compose 預設只在本機迴環介面的 `18100` 埠開放 Status API，可用 `KONG_METRICS_PORT` 改埠。Kong Admin API 維持停用。 [Kong Prometheus 外掛](https://developer.konghq.com/plugins/prometheus/)
+
+```sh
+curl -fsS "$KONG_BASE/orders" -H "x-api-key: $REST_API_KEY"
+MCP_URL="$KONG_BASE/mcp" python client.py
+curl -fsS "http://127.0.0.1:${KONG_METRICS_PORT:-18100}/metrics" \
+  | grep -E '^kong_(http_requests_total|request_latency_ms_count)'
+docker compose -f kong/compose.yaml logs --tail=30 kong
+```
+
+輸出中可找到 `order-rest-routes` 和 `order-mcp-stream`。在主機執行的 Prometheus 可抓取 `127.0.0.1:18100` 的 `/metrics`。在同一個 Compose 網路內的 Prometheus 容器可抓取 `kong:8100`。若原本已啟動服務，更新後執行 `docker compose -f kong/compose.yaml up -d --wait` 套用連接埠及外掛設定。
+
+## 5. 排查問題與清理
 
 | 現象 | 檢查方式 |
 |---|---|

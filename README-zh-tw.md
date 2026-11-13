@@ -1,6 +1,6 @@
 # 當 API Gateway 遇上 MCP｜訂單 Demo
 
-[English](README.md)
+語言：[繁體中文](README-zh-tw.md) | [English](README-en.md)
 
 MCP Client → FastMCP Gateway → FastAPI REST API → SQLite
 
@@ -12,6 +12,8 @@ Gateway 啟動時讀取 FastAPI 的 OpenAPI，依操作 ID 的允許清單產生
 |---|---|---|
 | Google Cloud API Gateway | 原生 MCP（公開預覽）將工具呼叫轉成 Cloud Run 的 REST 請求 | [繁體中文](docs/google-cloud-zh-tw.md) · [English](docs/google-cloud.md) |
 | Kong Gateway | 本機 DB-less Kong 轉發 REST 請求與既有 FastMCP 流量 | [繁體中文](kong/README-zh-tw.md) · [English](kong/README.md) |
+| Envoy | 原生 MCP JSON REST Bridge 將工具呼叫轉成 FastAPI 的 REST 請求 | [繁體中文](envoy/README-zh-tw.md) · [English](envoy/README.md) |
+| Apigee | 受管 MCP Discovery Proxy 依 OpenAPI 將工具呼叫轉到 Apigee REST Proxy | [繁體中文](apigee/README-zh-tw.md) · [English](apigee/README.md) |
 
 直接執行原本的本機範例可參照下方說明。
 
@@ -111,3 +113,9 @@ python -m unittest -v test_demo
 ```
 
 獨立執行的範例使用本機服務與示範金鑰。Google Cloud 指南使用 `google-cloud-openapi-example.yaml` 作為部署範本。
+
+---
+
+## LICENSE
+
+MIT

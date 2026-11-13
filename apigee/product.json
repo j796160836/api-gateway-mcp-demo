@@ -1,0 +1,123 @@
+{
+  "name": "order-demo",
+  "displayName": "Order Demo",
+  "approvalType": "auto",
+  "attributes": [
+    {
+      "name": "access",
+      "value": "internal"
+    }
+  ],
+  "operationGroup": {
+    "operationConfigs": [
+      {
+        "apiSource": "order-demo-rest",
+        "operations": [
+          {
+            "resource": "/orders",
+            "methods": [
+              "GET",
+              "POST"
+            ]
+          }
+        ]
+      },
+      {
+        "apiSource": "order-demo-rest",
+        "operations": [
+          {
+            "resource": "/orders/*",
+            "methods": [
+              "GET"
+            ]
+          }
+        ]
+      },
+      {
+        "apiSource": "order-demo-rest",
+        "operations": [
+          {
+            "resource": "/inventory",
+            "methods": [
+              "GET"
+            ]
+          }
+        ]
+      },
+      {
+        "apiSource": "order-demo-rest",
+        "operations": [
+          {
+            "resource": "/inventory/*",
+            "methods": [
+              "GET"
+            ]
+          }
+        ]
+      },
+      {
+        "apiSource": "order-demo-rest",
+        "operations": [
+          {
+            "resource": "/shipments",
+            "methods": [
+              "POST"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "payloadOperationGroup": {
+    "operationConfigs": [
+      {
+        "apiSource": "order-demo-mcp",
+        "operations": [
+          {
+            "operation": "tools/list"
+          }
+        ]
+      },
+      {
+        "apiSource": "order-demo-mcp",
+        "operations": [
+          {
+            "operation": "tools/call/list_order"
+          }
+        ]
+      },
+      {
+        "apiSource": "order-demo-mcp",
+        "operations": [
+          {
+            "operation": "tools/call/get_order"
+          }
+        ]
+      },
+      {
+        "apiSource": "order-demo-mcp",
+        "operations": [
+          {
+            "operation": "tools/call/list_sku"
+          }
+        ]
+      },
+      {
+        "apiSource": "order-demo-mcp",
+        "operations": [
+          {
+            "operation": "tools/call/check_inventory"
+          }
+        ]
+      },
+      {
+        "apiSource": "order-demo-mcp",
+        "operations": [
+          {
+            "operation": "tools/call/create_shipment"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+<ParsePayload name="ParsePayload-MCP">
+  <Source>request</Source>
+  <PayloadType>JSON-RPC-2.0</PayloadType>
+  <Protocol>MCP</Protocol>
+</ParsePayload>

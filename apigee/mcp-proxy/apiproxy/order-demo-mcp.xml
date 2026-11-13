@@ -1,0 +1,16 @@
+<APIProxy name="order-demo-mcp">
+  <DisplayName>Order Demo MCP</DisplayName>
+  <Policies>
+    <Policy>ParsePayload-MCP</Policy>
+    <Policy>Verify-Order-Key</Policy>
+  </Policies>
+  <ProxyEndpoints>
+    <ProxyEndpoint>default</ProxyEndpoint>
+  </ProxyEndpoints>
+  <TargetEndpoints>
+    <TargetEndpoint>default</TargetEndpoint>
+  </TargetEndpoints>
+  <Resources>
+    <Resource>oas://order-mcp.yaml</Resource>
+  </Resources>
+</APIProxy>

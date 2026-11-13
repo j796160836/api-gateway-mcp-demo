@@ -46,10 +46,12 @@ services:
       KONG_PROXY_LISTEN: "0.0.0.0:8000"
       KONG_ADMIN_LISTEN: "off"
       KONG_ADMIN_GUI_LISTEN: "off"
+      KONG_STATUS_LISTEN: "0.0.0.0:8100"
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
     ports:
       - "127.0.0.1:${KONG_DEMO_PORT:-18000}:8000"
+      - "127.0.0.1:${KONG_METRICS_PORT:-18100}:8100"
     volumes:
       - ./kong.yaml:/etc/kong/kong.yaml:ro
     depends_on:

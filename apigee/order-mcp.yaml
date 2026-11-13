@@ -1,0 +1,59 @@
+openapi: 3.0.3
+info:
+  title: Order Demo MCP Tools
+  version: 1.0.0
+servers:
+  - url: https://replace-apigee.example.com
+paths:
+  /order-demo/orders:
+    get:
+      operationId: list_order
+      description: List demo orders and their current status.
+      responses:
+        '200': {description: Order list}
+  /order-demo/orders/{order_id}:
+    get:
+      operationId: get_order
+      description: Look up one order by ID.
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: Order record}
+        '404': {description: Order not found}
+  /order-demo/inventory:
+    get:
+      operationId: list_sku
+      description: List SKUs and their available stock.
+      responses:
+        '200': {description: SKU list}
+  /order-demo/inventory/{sku}:
+    get:
+      operationId: check_inventory
+      description: Check the available stock for one SKU.
+      parameters:
+        - name: sku
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: Stock record}
+        '404': {description: SKU not found}
+  /order-demo/shipments:
+    post:
+      operationId: create_shipment
+      description: Create a shipment for a paid order after explicit human approval.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [order_id]
+              properties:
+                order_id: {type: string}
+      responses:
+        '200': {description: Created shipment}
+        '409': {description: Order cannot ship}
